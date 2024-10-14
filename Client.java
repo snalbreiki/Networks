@@ -1,47 +1,36 @@
 import java.io.*;
 import java.net.*;
 
-public class Client{
+public class Client {
     public static void main(String[] args) {
         DatagramSocket clientSocket = null;
 
         try {
-            clientSocket = new DatagramSocket();
-            InetAddress serverAddress = InetAddress.getByName("localhost");
-            /*
-            // Send request to the server with separator "_"
-            String request = "GET_TIMESTAMP";
-            byte[] sendData = request.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, 12345);
-            clientSocket.send(sendPacket);
+            clientSocket = new DatagramSocket();  // Create client socket
+            InetAddress serverAddress = InetAddress.getByName("localhost");  // Server address
 
-            byte[] receiveData = new byte[1024];
+            // Construct email message
+            String email = "From: Client\n" +
+                    "To: Server\n" +
+                    "Subject: Test\n" +
+                    "Body: Helllooo\n";
+
+            byte[] sendData = email.getBytes();  // Convert email to bytes
+            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, 1234);
+            clientSocket.send(sendPacket);  // Send email packet
+
+            byte[] receiveData = new byte[1024];  // Buffer for server response
             DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-            clientSocket.receive(receivePacket);
+            clientSocket.receive(receivePacket);  // Receive response
 
-            String timestamp = new String(receivePacket.getData(), 0, receivePacket.getLength());
-            System.out.println("Received timestamp from server: " + timestamp);
-            */
-            // Email format
-            String email =  "From: Client\n" +
-                            "To: Server\n" +
-                            "Subject: Test\n" +
-                            "Body: Helllooo\n";
-
-            byte[] sendData = email.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, 12345);
-            clientSocket.send(sendPacket);
-
-            byte[] receiveData = new byte[1024];
-            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-            clientSocket.receive(receivePacket);
-
+            // Print server's response
             String response = new String(receivePacket.getData(), 0, receivePacket.getLength());
-            System.out.println("Received response from server: " + response);
+            System.out.println("Server response: " + response);
 
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+            // Close client socket if open
             if (clientSocket != null && !clientSocket.isClosed()) {
                 clientSocket.close();
             }
