@@ -1,99 +1,89 @@
 import java.io.*;
 import java.net.*;
+import java.sql.Timestamp;
 
-public class Server{
-    static int port = 12345;    // port no
+public class Server {
+    static int port = 1234;    // Port number
+
     public static void main(String[] args) {
         DatagramSocket serverSocket = null;
 
         try {
-            serverSocket = new DatagramSocket(port);
-            byte[] receiveData = new byte[1024];
-
+            serverSocket = new DatagramSocket(port); // Create server socket
+            byte[] receiveData = new byte[1024];     // Buffer for incoming data
             System.out.println("Server is listening on port " + port + "...");
 
+
             while (true) {
+                // Receive the packet
                 DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
                 serverSocket.receive(receivePacket);
 
+                // Convert the packet data to string
                 String message = new String(receivePacket.getData(), 0, receivePacket.getLength());
 
-                // Parse and extract headers
-                String from=null,to=null,subject=null,body = null;
-                boolean fromExist = false,toExist=false,subjectExist=false  ,bodyExist=false;
+                // Initialize email components
+                String from = null, to = null, subject = null, body = null;
+                boolean fromExist = false, toExist = false, subjectExist = false, bodyExist = false;
 
-                String[] lines = message.split("\n");
+                // Parse headers
+                String[] lines = message.split("\n");  // Split message into lines
 
                 for (String line : lines) {
-                    if (line.startsWith("From: ")) {                // ensure to have more chars than trimmed to avoid error
+                    if (line.startsWith("From: ")) {
                         fromExist = true;
-                        from = line.substring(6).trim(); // extract "From" value
+                        from = line.substring(6).trim(); // Extract "From" value
                     } else if (line.startsWith("To: ")) {
                         toExist = true;
-                        to = line.substring(4).trim();   // exttart "To" value
+                        to = line.substring(4).trim();   // Extract "To" value
                     } else if (line.startsWith("Subject: ")) {
                         subjectExist = true;
-                        subject = line.substring(9).trim(); // extarct "Subject" value
+                        subject = line.substring(9).trim(); // Extract "Subject" value
                     } else if (line.startsWith("Body: ")) {
                         bodyExist = true;
-                        body = line.substring(6).trim(); // extract "Body" value
+                        body = line.substring(6).trim(); // Extract "Body" value
                     }
                 }
-                InetAddress clientAddress = receivePacket.getAddress();
-                int clientPort = receivePacket.getPort();
+                // Verification
 
+                InetAddress clientAddress = receivePacket.getAddress();  // Get client address
+                int clientPort = receivePacket.getPort();                // Get client port
+
+                // If all headers exist, send success response
                 if (fromExist && toExist && subjectExist && bodyExist) {
                     System.out.println("Email from " + receivePacket.getAddress() + " received successfully.");
 
-                    String response = "Server received your email successfully.";
+                    String response = "Server received your email successfully \nReceived timestamp: " + java.time.LocalDateTime.now().toString();
                     byte[] sendData = response.getBytes();
 
+                    // Send response
                     DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddress, clientPort);
                     serverSocket.send(sendPacket);
 
                     System.out.println("Successful email response sent to client at " + clientAddress + ":" + clientPort);
-                    System.out.println ( message ); //Test
-                }
-                else {
-                    System.out.println ("Invalid email: One or more headers are missing." );
+                    System.out.println(message);  // Test
+                } else {
+                    // If headers are missing, send error response
+                    System.out.println("Invalid email from " + receivePacket.getAddress() + ": One or more headers are missing.");
 
-                    String response = "invalid email: One or more headers are missing.";
+                    String response = "Invalid email: One or more headers are missing.";
                     byte[] sendData = response.getBytes();
 
+                    // Send response
                     DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddress, clientPort);
                     serverSocket.send(sendPacket);
 
                     System.out.println("Invalid email response sent to client at " + clientAddress + ":" + clientPort);
                 }
-
-                /*
-                String[] parts = message.split("_");
-
-                if (parts.length == 2 && parts[0].equals("GET") && parts[1].equals("TIMESTAMP")) {
-
-                    String timestamp = java.time.LocalDateTime.now().toString();
-                    InetAddress clientAddress = receivePacket.getAddress();
-                    int clientPort = receivePacket.getPort();
-                    byte[] sendData = timestamp.getBytes();
-
-                    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddress, clientPort);
-                    serverSocket.send(sendPacket);
-
-                    System.out.println("Timestamp sent to client at " + clientAddress + ":" + clientPort);
-                } else {
-                    System.out.println("Invalid request from client");
-                }
-                */
-
             }
 
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+            // Close server socket
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close();
             }
         }
     }
-
 }
