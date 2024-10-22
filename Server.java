@@ -85,7 +85,7 @@ public class Server {
         }
     }
 
-    // Methods to check if "from" and "to" emails exists in the server list of emails
+    // Method to check if "from" and "to" emails exists in the server list of emails
     private static boolean emailsExistsInDirectory ( Email email ) {
         File dir = new File("Client_Emails");
         if (!dir.exists()) {    // if the dir does not exist, create one
@@ -150,7 +150,7 @@ class Email {
         this.timestamp = timestamp;
     }
 
-    // Parse email and validate
+    // Parse email and validate from nullity
     public boolean parseEmailNValidate ( String message) {
         String[] lines = message.split("\n");  // split headers indicated by ending new line
 
