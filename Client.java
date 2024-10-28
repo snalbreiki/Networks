@@ -10,10 +10,10 @@ public class Client {
 
         try {
             clientSocket = new DatagramSocket();       // Create client socket
-            InetAddress serverAddress = InetAddress.getByName("localhost");  // Server address
             Scanner cin = new Scanner(System.in);      // Scanner to take user input
             System.out.println("- Mail Client starting on host: " + InetAddress.getLocalHost().getHostName());
 
+            InetAddress serverAddress = null;
             byte[] receiveData = new byte[ 1024 ];     // Buffer for server response
             DatagramPacket receivePacket = new DatagramPacket ( receiveData , receiveData.length );
 
@@ -24,6 +24,7 @@ public class Client {
                 if(!isConnected) {
                     System.out.print ( "[-] Type server name: " );  // Ask user to enter server name
                     String serverName = cin.next();
+                    serverAddress = InetAddress.getByName(serverName);  // Server address
                     sendMessage ( clientSocket , serverAddress , "CONNECTION-REQUEST" ); // Send connection request to server
 
                     clientSocket.receive ( receivePacket );                 // Receive response (should be actual server name)
