@@ -28,34 +28,18 @@ public class Client {
                     serverAddress = InetAddress.getByName(serverName);  // Server address
 
                     if (!serverAddress.isReachable(1)) { // check if typed server name is not reachable
-                        System.out.println ( "- Server does not respond \n   * Check for possible name mismatch" );
-                        continue;
-                    } else{
+
                         isConnected = true;
                         System.out.println ("- Connected to server: " );
+                        sendMessage ( clientSocket,serverAddress,"CONNECTION");
+                    } else{
+                        System.out.println ( "- Server does not respond \n   * Check for possible name mismatch" );
+                        continue;
                     }
                 }}catch (Exception e){
                     continue;
                 }
-                /*
-                if(!isConnected) {
-                    System.out.print ( "[-] Type server name: " );  // Ask user to enter server name
-                    String serverName = cin.next();
-                    serverAddress = InetAddress.getByName(serverName);  // Server address
-                    sendMessage ( clientSocket , serverAddress , "CONNECTION-REQUEST" ); // Send connection request to server
 
-                    clientSocket.receive ( receivePacket );                 // Receive response (should be actual server name)
-                    String serverResponse = new String ( receivePacket.getData ( ) , 0 , receivePacket.getLength ( ) );  // parse to string
-                    if (serverResponse.equals ( serverName )) {             // if actual server name matches user input
-                        sendMessage ( clientSocket , serverAddress , "CONNECTION-REQUEST-CONFIRM" );  // send confirmation to server
-                        System.out.println ( "- Connected to server" );     // notify client for connection success
-                        isConnected = true;                                 // update connection status
-                    } else {
-                        System.out.println ( "- Server does not respond\n- Check for Possible name mismatch" ); // notify client for connection failure
-                        continue;  // Loop for reattempt
-                    }
-                }
-*/
                 // User input
                 System.out.println("---------------------\nCreating New Email..");
 
@@ -118,7 +102,7 @@ public class Client {
     private static void sendMessage(DatagramSocket clientSocket, InetAddress serverAddress, String message) {
         try {
             byte[] sendData = message.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, 1234);
+            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, 12345);
             clientSocket.send(sendPacket);  // Send disconnect message
         } catch (IOException e) {
             e.printStackTrace();
