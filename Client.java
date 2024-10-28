@@ -21,6 +21,23 @@ public class Client {
 
             while (true) {
                 // Validate server name given by user
+                try{
+                if(!isConnected){
+                    System.out.print ( "[-] Type server name: " );  // Ask user to enter server name
+                    String serverName = cin.next();
+                    serverAddress = InetAddress.getByName(serverName);  // Server address
+
+                    if (!serverAddress.isReachable(1)) { // check if typed server name is not reachable
+                        System.out.println ( "- Server does not respond \n   * Check for possible name mismatch" );
+                        continue;
+                    } else{
+                        isConnected = true;
+                        System.out.println ("- Connected to server: " );
+                    }
+                }}catch (Exception e){
+                    continue;
+                }
+                /*
                 if(!isConnected) {
                     System.out.print ( "[-] Type server name: " );  // Ask user to enter server name
                     String serverName = cin.next();
@@ -38,7 +55,7 @@ public class Client {
                         continue;  // Loop for reattempt
                     }
                 }
-
+*/
                 // User input
                 System.out.println("---------------------\nCreating New Email..");
 
@@ -85,8 +102,9 @@ public class Client {
                 // Print server's response
                 System.out.println("- Server response: " + response);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+
         } finally {
             // Close client socket if open
             if (clientSocket != null && !clientSocket.isClosed()) {
@@ -94,9 +112,9 @@ public class Client {
             }
             System.out.println("Client disconnected.");
         }
-    }
 
-    // Method to send a message
+}
+        // Method to send a message
     private static void sendMessage(DatagramSocket clientSocket, InetAddress serverAddress, String message) {
         try {
             byte[] sendData = message.getBytes();
