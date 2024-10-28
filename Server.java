@@ -1,14 +1,14 @@
 import java.io.*;
 import java.net.*;
 import java.text.*;
-// *TimeFormat needs modif
+import java.time.*;
+import java.time.format.*;
 
 public class Server {
-    static int port = 12345;    // Port number
+    static int port = 1234;    // Port number
 
     public static void main(String[] args) {
-        int receivedEmailCount = 0;
-        //SimpleDateFormat dateFormat = new SimpleDateFormat("EEE. MMM. d, yyyy HH:mm");
+        int receivedEmailCount = 0;   // counter of received emails (for better readability)
 
         DatagramSocket serverSocket = null;
         try {
@@ -17,14 +17,14 @@ public class Server {
 
             System.out.printf("- Mail Server Starting at host: %s \n", InetAddress.getLocalHost().getHostName());
             System.out.println("- Mail Server is listening on port " + port);
-            System.out.println ("- Waiting to be contacted for transferring Mail... \n\n");
+            System.out.println ("- Waiting for a client connection.. \n");
 
-            while (true) {
-                // Kill program by ctrl c
-
-                // receive the packet
+            //boolean isConnected = false;
+            while(true) {
+                // receive  packet
                 DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
                 serverSocket.receive(receivePacket);
+
 
                 // get client address and port
                 InetAddress clientAddress = receivePacket.getAddress();
@@ -32,6 +32,19 @@ public class Server {
 
                 // convert packet data to string
                 String message = new String(receivePacket.getData(), 0, receivePacket.getLength());
+
+                // check for connection request
+                if(message.startsWith ("CONNECTION-REQUEST" )){
+                    sendResponse ( serverSocket, clientAddress, clientPort, InetAddress.getLocalHost().getHostName() );
+                    serverSocket.receive(receivePacket);
+                    message = new String(receivePacket.getData(), 0, receivePacket.getLength());
+                    if(message.startsWith ("CONNECTION-REQUEST-CONFIRM" )){
+                        //isConnected = true;
+                        System.out.println ("- Client connected" );
+                    }
+                    continue;
+                }
+
 
                 // create Email object
                 Email email = new Email();
@@ -42,25 +55,32 @@ public class Server {
                     receivedEmailCount++;
                     System.out.printf ("\n**** [NEW EMAIL | Email No: %d] ****\n",receivedEmailCount);
                     System.out.println("Mail Received from " + clientAddress.getHostName ());
-                    System.out.println("FROM: " + email.getFrom());
-                    System.out.println("TO: " + email.getTo());
-                    System.out.println("SUBJECT: " + email.getSubject());
-                    System.out.println("TIME: " + email.getTimestamp());
+                    System.out.println("From: " + email.getFrom());
+                    System.out.println("To: " + email.getTo());
+                    System.out.println("Subject: " + email.getSubject());
+                    System.out.println("Time: " + email.getTimestamp());
                     System.out.println(email.getBody());
                     System.out.println("***********************************");
 
                     // send "250 OK" response
-                    String serverTimeStamp = java.time.LocalDateTime.now().toString();
-                    System.out.print( "- The Header fields are verified.\n- Sending \"250 OK\"\n" );
-                    sendResponse(serverSocket, clientAddress, clientPort, "250 OK: Email received successfully at " + serverTimeStamp);
+                    String serverTimeStamp = LocalDateTime.now().format( DateTimeFormatter.ofPattern("EEE. MMM. d, yyyy HH:mm"));
 
-                    System.out.println ("- Waiting to be contacted for transferring Mail... \n" );
+                    System.out.print( "- The Header fields are verified.\n- Sending \"250 OK\"\n" );
+                    sendResponse(serverSocket, clientAddress, clientPort, ("250 OK: Email received successfully at " + serverTimeStamp));
+
+                    System.out.println ("\n- Waiting to be contacted for transferring Mail... \n" );
                 }
                 else {
+                    if(message.equals("Client disconnecting" )) {
+                        System.out.println (message );
+                        System.out.println ("- Waiting to be contacted for transferring Mail... \n\n");
+                        continue;
+                    }
                     // send "501 Error" response
-                    sendResponse( serverSocket , clientAddress , clientPort , "501 Error" );
+                    String serverTimeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEE. MMM. d, yyyy HH:mm"));
+                    sendResponse( serverSocket , clientAddress , clientPort , "501 Error: at " + serverTimeStamp);
                     System.out.print( "- The Header fields are not valid.\n- Sending \"501 Error\"\n" );
-                    sendResponse(serverSocket, clientAddress, clientPort, "501 Error");
+                    sendResponse(serverSocket, clientAddress, clientPort, ("501 Error at " +serverTimeStamp));
 
                     System.out.println ("- Waiting to be contacted for transferring Mail... \n" );
                 }
@@ -96,9 +116,44 @@ public class Server {
         File ToEmailFile = new File(dir, email.getTo() +".txt");
 
         if(FromEmailFile.exists() && ToEmailFile.exists()) { // return true if emails in list
+            saveEmailToClientDirectory(email);
             return true;
         }
         return false;
+    }
+
+    private static void saveEmailToClientDirectory(Email email) {
+        File dir = new File("Client_Emails");
+        // Create files for "From" and "To" email addresses
+        File fromFile = new File(dir, email.getFrom() + ".txt");
+        File toFile = new File(dir, email.getTo() + ".txt");
+
+        try {
+            // Write email content to the "From" file
+            BufferedWriter writer = new BufferedWriter(new FileWriter(fromFile,true));
+            writer.write("-------------Sent Email-----------------\n");
+            writer.write("From: " + email.getFrom() + "\n");
+            writer.write("To: " + email.getTo() + "\n");
+            writer.write("Subject: " + email.getSubject() + "\n");
+            writer.write("Timestamp: " + email.getTimestamp() + "\n");
+            writer.write("Body: " + email.getBody() + "\n");
+            writer.write("----------------------------------------\n");
+            writer.close();
+
+            // Write email content to the "To" file
+            writer = new BufferedWriter(new FileWriter(toFile,true)); // true make it appends info
+            writer.write("-------------Received Email------------\n");
+            writer.write("From: " + email.getFrom() + "\n");
+            writer.write("To: " + email.getTo() + "\n");
+            writer.write("Subject: " + email.getSubject() + "\n");
+            writer.write("Timestamp: " + email.getTimestamp() + "\n");
+            writer.write("Body: " + email.getBody() + "\n");
+            writer.write("----------------------------------------\n");
+            writer.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 
@@ -150,7 +205,7 @@ class Email {
         this.timestamp = timestamp;
     }
 
-    // Parse email and validate from nullity
+    // Parse email and validate
     public boolean parseEmailNValidate ( String message) {
         String[] lines = message.split("\n");  // split headers indicated by ending new line
 
@@ -170,6 +225,4 @@ class Email {
         // Check if all headers are !null and "to" and "from" emails is valid by checking if (@ and .) exists in them
         return from != null && to != null && timestamp != null && this.to.contains("@") && this.to.contains(".") && this.from.contains("@") && this.from.contains(".");
     }
-
 }
-
