@@ -33,7 +33,7 @@ public class Server {
                 // convert packet data to string
                 String message = new String(receivePacket.getData(), 0, receivePacket.getLength());
 
-                // check for connection request
+                // check for connection request (better to comment)
                 if(message.startsWith ("CONNECTION-REQUEST" )){
                     sendResponse ( serverSocket, clientAddress, clientPort, InetAddress.getLocalHost().getHostName() );
                     serverSocket.receive(receivePacket);
@@ -44,8 +44,7 @@ public class Server {
                     }
                     continue;
                 }
-
-
+                
                 // create Email object
                 Email email = new Email();
 
